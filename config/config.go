@@ -1,3 +1,4 @@
+// Package config provides access interface for config file.
 package config
 
 import (

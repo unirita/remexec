@@ -1,3 +1,4 @@
+// Pakcage console implements functions to create or display console messages.
 package console
 
 import (
