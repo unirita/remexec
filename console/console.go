@@ -7,7 +7,7 @@ import (
 )
 
 var msgs = map[string]string{
-	"REX001E": "Sample Message(Replace this message with first message.)",
+	"REX001E": "INVALID ARGUMENT - %s",
 }
 
 // Display outputs formatted message associated with code to stdout.
