@@ -5,6 +5,7 @@ import (
 	"flag"
 	"os"
 
+	"github.com/unirita/remexec/config"
 	"github.com/unirita/remexec/console"
 )
 
@@ -26,6 +27,11 @@ func main() {
 func realMain(args *arguments) int {
 	if err := validateArgs(args); err != nil {
 		console.Display("REX001E", err)
+		return rc_ERROR
+	}
+
+	if err := config.Load(args.configPath); err != nil {
+		console.Display("REX002E", err)
 		return rc_ERROR
 	}
 
