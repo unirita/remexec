@@ -20,7 +20,12 @@ type remoteSection struct {
 	IsWindows int    `toml:"is_windows"`
 }
 
-var Remote = new(remoteSection)
+var (
+	Host      string
+	User      string
+	Pass      string
+	IsWindows bool
+)
 
 // Load loads config from file which is in path.
 func Load(path string) error {
@@ -38,6 +43,9 @@ func loadReader(reader io.Reader) error {
 		return err
 	}
 
-	Remote = &c.Remote
+	Host = c.Remote.Host
+	User = c.Remote.User
+	Pass = c.Remote.Pass
+	IsWindows = c.Remote.IsWindows != 0
 	return nil
 }

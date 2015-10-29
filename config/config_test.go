@@ -12,40 +12,58 @@ func TestLoad_FileNotExists(t *testing.T) {
 	}
 }
 
-func TestLoadReader_Normal(t *testing.T) {
+func TestLoadReader_Normal_Windows(t *testing.T) {
 	c := `
 [remote]
-host = "testhost"
-user = "testuser"
-pass = "testpass"
-os   = "testos"
+host       = "testhost"
+user       = "testuser"
+pass       = "testpass"
+is_windows = 1
 `
 
 	err := loadReader(strings.NewReader(c))
 	if err != nil {
 		t.Fatalf("Error occured in loadReader: %s", err)
 	}
-	if Remote.Host != "testhost" {
-		t.Errorf("Remote.Host => %s, wants %s", Remote.Host, "testhost")
+	if Host != "testhost" {
+		t.Errorf("Host => %s, wants %s", Host, "testhost")
 	}
-	if Remote.User != "testuser" {
-		t.Errorf("Remote.User => %s, wants %s", Remote.User, "testuser")
+	if User != "testuser" {
+		t.Errorf("User => %s, wants %s", User, "testuser")
 	}
-	if Remote.Pass != "testpass" {
-		t.Errorf("Remote.Pass => %s, wants %s", Remote.Pass, "testpass")
+	if Pass != "testpass" {
+		t.Errorf("Pass => %s, wants %s", Pass, "testpass")
 	}
-	if Remote.OS != "testos" {
-		t.Errorf("Remote.OS => %s, wants %s", Remote.OS, "testos")
+	if !IsWindows {
+		t.Errorf("IsWindows must be true, but it was not.")
+	}
+}
+
+func TestLoadReader_Normal_NotWindows(t *testing.T) {
+	c := `
+[remote]
+host       = "testhost"
+user       = "testuser"
+pass       = "testpass"
+is_windows = 0
+`
+
+	err := loadReader(strings.NewReader(c))
+	if err != nil {
+		t.Fatalf("Error occured in loadReader: %s", err)
+	}
+	if IsWindows {
+		t.Errorf("IsWindows must be false, but it was not.")
 	}
 }
 
 func TestLoadReader_ParseError(t *testing.T) {
 	c := `
 [remote
-host = "testhost"
-user = "testuser"
-pass = "testpass"
-os   = "testos"
+host       = "testhost"
+user       = "testuser"
+pass       = "testpass"
+is_windows = 1
 `
 
 	err := loadReader(strings.NewReader(c))
