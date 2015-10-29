@@ -1,14 +1,14 @@
 package executor
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
 	"github.com/unirita/remexec/config"
 )
 
-var psExeTmpArgByCmd = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"[cmd] \"}"
+var psExeTmpArgByCmd = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"[cmd] \"}; echo $?"
 
 var psExeTmpArgByScript = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -File \"[script]\" }"
 
@@ -20,6 +20,10 @@ type WinrmExecutor struct {
 	user string
 	pass string
 }
+
+type commandRunFunc func(*exec.Cmd) error
+
+var cmdRun commandRunFunc = run
 
 func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	e := new(WinrmExecutor)
@@ -33,13 +37,22 @@ func (e *WinrmExecutor) ExecuteCommand(command string) error {
 	// TODO: Call command with powershell.exe
 	cmdArg := createPSCommandArgument(e.host, e.user, e.pass, command)
 	cmd := exec.Command(powershellExeAbsPath, powershellExeOption, cmdArg)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	result, err := cmd.Output()
+	err := cmdRun(cmd)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s", result)
+	return nil
+}
+
+func run(cmd *exec.Cmd) error {
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }

@@ -1,10 +1,37 @@
 package executor
 
 import (
+	"errors"
+	"os/exec"
 	"testing"
 
 	"github.com/unirita/remexec/config"
 )
+
+func makeTestWinrmExecutor() *WinrmExecutor {
+	e := new(WinrmExecutor)
+	e.host = "host"
+	e.user = "user"
+	e.pass = "pass"
+
+	return e
+}
+
+func makeCmmandSuccess() {
+	cmdRun = func(*exec.Cmd) error {
+		return nil
+	}
+}
+
+func restCommandFunc() {
+	cmdRun = run
+}
+
+func makeCommandFailed() {
+	cmdRun = func(*exec.Cmd) error {
+		return errors.New("error")
+	}
+}
 
 func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 	c := new(config.Config)
@@ -27,8 +54,26 @@ func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 
 }
 
-func TestExecuteCommand_ExecuteCommandPowershell(t *testing.T) {
+func TestExecuteCommand_SuccessCommand(t *testing.T) {
+	e := makeTestWinrmExecutor()
 
+	makeCmmandSuccess()
+	defer restCommandFunc()
+
+	if err := e.ExecuteCommand(""); err != nil {
+		t.Errorf("Error occurs that is not expected.")
+	}
+}
+
+func TestExecuteCommand_FailedCommand(t *testing.T) {
+	e := makeTestWinrmExecutor()
+
+	makeCommandFailed()
+	defer restCommandFunc()
+
+	if err := e.ExecuteCommand(""); err == nil {
+		t.Errorf("Error did not occur.")
+	}
 }
 
 func TestExecuteScript_ExecutePowershellScript(t *testing.T) {
@@ -36,7 +81,7 @@ func TestExecuteScript_ExecutePowershellScript(t *testing.T) {
 }
 
 func TestCreatecreatePSCommandArgument_ValueCheck(t *testing.T) {
-	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"echo hoge \"}"
+	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"echo hoge \"}; echo $?"
 
 	result := createPSCommandArgument("hostName", "userName", "password", "echo hoge")
 
