@@ -1,24 +1,18 @@
 package executor
 
 import (
+	"fmt"
 	"os/exec"
 	"strings"
 
 	"github.com/unirita/remexec/config"
 )
 
-var psExeTmpArgByCmd = `"& {invoke-command -ComputerName [remoteHost]
- -Credential (ConvertTo-SecureString [pass]
- -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential([userName], $_) } | % { Get-Credential $_ })
- -ScriptBlock{Invoke-Expression $args[0]}
- -argumentList [cmd]}"`
+var psExeTmpArgByCmd = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"[cmd] \"}"
 
-var psExeTmpArgByScript = `"& {invoke-command -ComputerName [remoteHost]
- -Credential (ConvertTo-SecureString [pass]
- -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential([userName], $_) } | % { Get-Credential $_ })
- -File [script] }"`
+var psExeTmpArgByScript = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -File \"[script]\" }"
 
-const powershellExeAbsPath = "powershell.exe"
+const powershellExeAbsPath = "C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
 const powershellExeOption = "-Command"
 
 type WinrmExecutor struct {
@@ -40,9 +34,12 @@ func (e *WinrmExecutor) ExecuteCommand(command string) error {
 	cmdArg := createPSCommandArgument(e.host, e.user, e.pass, command)
 	cmd := exec.Command(powershellExeAbsPath, powershellExeOption, cmdArg)
 
-	if err := cmd.Run(); err != nil {
+	result, err := cmd.Output()
+	if err != nil {
 		return err
 	}
+
+	fmt.Printf("%s", result)
 
 	return nil
 }
