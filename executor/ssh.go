@@ -3,6 +3,7 @@ package executor
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"golang.org/x/crypto/ssh"
 
@@ -55,7 +56,36 @@ func publicKeyFile(file string) ssh.AuthMethod {
 }
 
 func (e *SSHExecutor) ExecuteCommand(command string) error {
-	// TODO: Call command with golang.org/x/crypto/ssh
+	conn, err := ssh.Dial("tcp", e.addr, e.config)
+	if err != nil {
+		return fmt.Errorf("Dial error: %s", err)
+	}
+	defer conn.Close()
+
+	session, err := conn.NewSession()
+	if err != nil {
+		return fmt.Errorf("Create session error: %s", err)
+	}
+	defer session.Close()
+
+	session.Stdout = os.Stdout
+	session.Stderr = os.Stderr
+
+	modes := ssh.TerminalModes{
+		ssh.ECHO:          0,     // disable echoing
+		ssh.TTY_OP_ISPEED: 14400, // input speed = 14.4kbaud
+		ssh.TTY_OP_OSPEED: 14400, // output speed = 14.4kbaud
+	}
+
+	if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
+		return fmt.Errorf("Request pseudo terminal error: %s", err)
+	}
+
+	command = fmt.Sprintf("%s; echo RC=$?", command)
+	if err := session.Run(command); err != nil {
+		return fmt.Errorf("Run command error: %s", err)
+	}
+
 	return nil
 }
 
