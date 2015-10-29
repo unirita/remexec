@@ -11,7 +11,7 @@ func TestNew_LocalWindowsAndRemoteWindows(t *testing.T) {
 
 func TestNew_LocalWindowsAndRemoteUnix(t *testing.T) {
 	e := New("testhost", "testuser", "testpass", false)
-	if _, ok := e.(*SSHExecuter); !ok {
+	if _, ok := e.(*SSHExecutor); !ok {
 		t.Error("Type of executor must be SSHExecuter, but was not.")
 	}
 }
