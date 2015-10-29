@@ -43,14 +43,7 @@ func (e *WinrmExecutor) ExecuteScript(path string) error {
 	return nil
 }
 
-func FetchFileAbsPath(file string) string {
-	//TODO: Search file and return file abs path.
-
-	return ""
-}
-
 func createPowershellExeArgument(host, user, pass, cmd string) string {
-	//TODO: create an argument of power shell using host, user, pass.
 	r := strings.NewReplacer("[remoteHost]", host, "[userName]", user, "[pass]", pass, "[cmd]", cmd)
 	arg := r.Replace(powershellTmpArg)
 
