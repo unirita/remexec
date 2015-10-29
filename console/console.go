@@ -9,6 +9,7 @@ import (
 var msgs = map[string]string{
 	"REX001E": "INVALID ARGUMENT - %s",
 	"REX002E": "FAILED TO LOAD CONFIG - %s",
+	"REX003E": "FAILED TO EXECUTE - %s",
 }
 
 // Display outputs formatted message associated with code to stdout.

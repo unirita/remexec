@@ -7,6 +7,7 @@ import (
 
 	"github.com/unirita/remexec/config"
 	"github.com/unirita/remexec/console"
+	"github.com/unirita/remexec/executor"
 )
 
 type arguments struct {
@@ -29,12 +30,14 @@ func realMain(args *arguments) int {
 		console.Display("REX001E", err)
 		return rc_ERROR
 	}
-
 	if err := config.Load(args.configPath); err != nil {
 		console.Display("REX002E", err)
 		return rc_ERROR
 	}
-
+	if err := execute(args.command, args.scriptPath); err != nil {
+		console.Display("REX003E", err)
+		return rc_ERROR
+	}
 	return rc_OK
 }
 
@@ -58,4 +61,12 @@ func validateArgs(args *arguments) error {
 		return errors.New("Can not set both of -e option and -f option.")
 	}
 	return nil
+}
+
+func execute(command, scriptPath string) error {
+	e := executor.New(config.Host, config.User, config.Pass, config.IsWindows)
+	if scriptPath != "" {
+		return e.ExecuteScript(scriptPath)
+	}
+	return e.ExecuteCommand(command)
 }
