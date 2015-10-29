@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"fmt"
 	"io/ioutil"
 
 	"golang.org/x/crypto/ssh"
@@ -8,16 +9,23 @@ import (
 	"github.com/unirita/remexec/config"
 )
 
+const defaultPort = 22
+
 // SSHExecutor is a Executor which executes remote command with SSH.
 type SSHExecutor struct {
 	config *ssh.ClientConfig
-	host   string
+	addr   string
 }
 
 // NewSSHExecutor creates a SSHExecutor and set it client config .
 func NewSSHExecutor(cfg *config.Config) *SSHExecutor {
 	e := new(SSHExecutor)
-	e.host = cfg.Remote.Host
+	if cfg.SSH.Port <= 0 {
+		e.addr = fmt.Sprintf("%s:%d", cfg.Remote.Host, defaultPort)
+	} else {
+		e.addr = fmt.Sprintf("%s:%d", cfg.Remote.Host, cfg.SSH.Port)
+	}
+
 	e.config = new(ssh.ClientConfig)
 	e.config.User = cfg.Remote.User
 	if cfg.SSH.UseCertificate != 0 {
