@@ -26,3 +26,18 @@ func TestExecuteCommand_ExecuteCommandPowershell(t *testing.T) {
 func TestExecuteScript_ExecutePowershellScript(t *testing.T) {
 
 }
+
+func TestCreatePowershellExeArgument_ValueCheck(t *testing.T) {
+	expect := `"& {invoke-command -ComputerName hostName
+ -Credential (ConvertTo-SecureString password
+ -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(userName, $_) } | % { Get-Credential $_ })
+ -ScriptBlock{Invoke-Expression $args[0]}
+ -argumentList echo hoge}"`
+
+	result := createPowershellExeArgument("hostName", "userName", "password", "echo hoge")
+
+	if result != expect {
+		t.Errorf("It different from the contents of result is expecting. [%s]", result)
+	}
+
+}
