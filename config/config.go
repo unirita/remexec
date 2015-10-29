@@ -11,6 +11,7 @@ import (
 // Config has all sections and items in config file.
 type Config struct {
 	Remote RemoteSection
+	SSH    SSHSection
 }
 
 // RemoteSection is [remote] section in config file.
@@ -19,6 +20,13 @@ type RemoteSection struct {
 	User      string `toml:"user"`
 	Pass      string `toml:"pass"`
 	IsWindows int    `toml:"is_windows"`
+}
+
+// SSHSection is [remote] section in config file.
+type SSHSection struct {
+	Port           int    `toml:"port"`
+	UseCertificate int    `toml:"use_certificate"`
+	PrivateKeyFile string `toml:"private_key_file"`
 }
 
 // Load loads config from file which is in path.

@@ -19,6 +19,11 @@ host       = "testhost"
 user       = "testuser"
 pass       = "testpass"
 is_windows = 1
+
+[ssh]
+port             = 1234
+use_certificate  = 1
+private_key_file = "test.pem"
 `
 
 	c, err := loadReader(strings.NewReader(configString))
@@ -37,9 +42,48 @@ is_windows = 1
 	if c.Remote.IsWindows != 1 {
 		t.Errorf("c.Remote.IsWindows => %d, wants %d", c.Remote.IsWindows, 1)
 	}
+	if c.SSH.Port != 1234 {
+		t.Errorf("c.SSH.Port => %d, wants %d", c.SSH.Port, 1234)
+	}
+	if c.SSH.UseCertificate != 1 {
+		t.Errorf("c.SSH.UseCertificate => %d, wants %d", c.SSH.UseCertificate, 1)
+	}
+	if c.SSH.PrivateKeyFile != "test.pem" {
+		t.Errorf("c.SSH.PrivateKeyFile => %s, wants %s", c.SSH.PrivateKeyFile, "test.pem")
+	}
 }
 
-func TestLoadReader_ParseError(t *testing.T) {
+func TestLoadReader_Normal_Empty(t *testing.T) {
+	configString := ``
+
+	c, err := loadReader(strings.NewReader(configString))
+	if err != nil {
+		t.Fatalf("Error occured in loadReader: %s", err)
+	}
+	if c.Remote.Host != "" {
+		t.Errorf("c.Remote.Host => %s, must be empty", c.Remote.Host)
+	}
+	if c.Remote.User != "" {
+		t.Errorf("c.Remote.User => %s, must be empty", c.Remote.User)
+	}
+	if c.Remote.Pass != "" {
+		t.Errorf("c.Remote.Pass => %s, must be empty", c.Remote.Pass)
+	}
+	if c.Remote.IsWindows != 0 {
+		t.Errorf("c.Remote.IsWindows => %d, wants %d", c.Remote.IsWindows, 0)
+	}
+	if c.SSH.Port != 0 {
+		t.Errorf("c.SSH.Port => %d, wants %d", c.SSH.Port, 0)
+	}
+	if c.SSH.UseCertificate != 0 {
+		t.Errorf("c.SSH.UseCertificate => %d, wants %d", c.SSH.UseCertificate, 0)
+	}
+	if c.SSH.PrivateKeyFile != "" {
+		t.Errorf("c.SSH.PrivateKeyFile => %s, must be empty", c.SSH.PrivateKeyFile)
+	}
+}
+
+func TestLoadReader_Abnormal_ParseError(t *testing.T) {
 	configString := `
 [remote
 host       = "testhost"
