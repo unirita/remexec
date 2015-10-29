@@ -14,10 +14,10 @@ type config struct {
 
 // remoteSection is [remote] section in config file.
 type remoteSection struct {
-	Host string `toml:"host"`
-	User string `toml:"user"`
-	Pass string `toml:"pass"`
-	OS   string `toml:"os"`
+	Host      string `toml:"host"`
+	User      string `toml:"user"`
+	Pass      string `toml:"pass"`
+	IsWindows int    `toml:"is_windows"`
 }
 
 var Remote = new(remoteSection)
