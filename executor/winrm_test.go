@@ -36,11 +36,7 @@ func TestExecuteScript_ExecutePowershellScript(t *testing.T) {
 }
 
 func TestCreatecreatePSCommandArgument_ValueCheck(t *testing.T) {
-	expect := `"& {invoke-command -ComputerName hostName
- -Credential (ConvertTo-SecureString password
- -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(userName, $_) } | % { Get-Credential $_ })
- -ScriptBlock{Invoke-Expression $args[0]}
- -argumentList echo hoge}"`
+	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"echo hoge \"}"
 
 	result := createPSCommandArgument("hostName", "userName", "password", "echo hoge")
 
@@ -51,10 +47,7 @@ func TestCreatecreatePSCommandArgument_ValueCheck(t *testing.T) {
 }
 
 func TestCreatePSScriptArgument_ValueCheck(t *testing.T) {
-	expect := `"& {invoke-command -ComputerName hostName
- -Credential (ConvertTo-SecureString password
- -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(userName, $_) } | % { Get-Credential $_ })
- -File script.ps1 }"`
+	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -File \"script.ps1\" }"
 
 	result := createPSScriptArgument("hostName", "userName", "password", "script.ps1")
 
