@@ -8,44 +8,33 @@ import (
 	"github.com/BurntSushi/toml"
 )
 
-type config struct {
-	Remote remoteSection
+// Config has all sections and items in config file.
+type Config struct {
+	Remote RemoteSection
 }
 
-// remoteSection is [remote] section in config file.
-type remoteSection struct {
+// RemoteSection is [remote] section in config file.
+type RemoteSection struct {
 	Host      string `toml:"host"`
 	User      string `toml:"user"`
 	Pass      string `toml:"pass"`
 	IsWindows int    `toml:"is_windows"`
 }
 
-var (
-	Host      string
-	User      string
-	Pass      string
-	IsWindows bool
-)
-
 // Load loads config from file which is in path.
-func Load(path string) error {
+func Load(path string) (*Config, error) {
 	f, err := os.Open(path)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	return loadReader(f)
 }
 
 // loadReader loads config from reader.
-func loadReader(reader io.Reader) error {
-	c := new(config)
+func loadReader(reader io.Reader) (*Config, error) {
+	c := new(Config)
 	if _, err := toml.DecodeReader(reader, c); err != nil {
-		return err
+		return nil, err
 	}
-
-	Host = c.Remote.Host
-	User = c.Remote.User
-	Pass = c.Remote.Pass
-	IsWindows = c.Remote.IsWindows != 0
-	return nil
+	return c, nil
 }

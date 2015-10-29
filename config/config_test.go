@@ -6,14 +6,14 @@ import (
 )
 
 func TestLoad_FileNotExists(t *testing.T) {
-	err := Load("noexists")
+	_, err := Load("noexists")
 	if err == nil {
 		t.Error("Error must be occured, but was not.")
 	}
 }
 
-func TestLoadReader_Normal_Windows(t *testing.T) {
-	c := `
+func TestLoadReader_Normal(t *testing.T) {
+	configString := `
 [remote]
 host       = "testhost"
 user       = "testuser"
@@ -21,44 +21,26 @@ pass       = "testpass"
 is_windows = 1
 `
 
-	err := loadReader(strings.NewReader(c))
+	c, err := loadReader(strings.NewReader(configString))
 	if err != nil {
 		t.Fatalf("Error occured in loadReader: %s", err)
 	}
-	if Host != "testhost" {
-		t.Errorf("Host => %s, wants %s", Host, "testhost")
+	if c.Remote.Host != "testhost" {
+		t.Errorf("c.Remote.Host => %s, wants %s", c.Remote.Host, "testhost")
 	}
-	if User != "testuser" {
-		t.Errorf("User => %s, wants %s", User, "testuser")
+	if c.Remote.User != "testuser" {
+		t.Errorf("c.Remote.User => %s, wants %s", c.Remote.User, "testuser")
 	}
-	if Pass != "testpass" {
-		t.Errorf("Pass => %s, wants %s", Pass, "testpass")
+	if c.Remote.Pass != "testpass" {
+		t.Errorf("c.Remote.Pass => %s, wants %s", c.Remote.Pass, "testpass")
 	}
-	if !IsWindows {
-		t.Errorf("IsWindows must be true, but it was not.")
-	}
-}
-
-func TestLoadReader_Normal_NotWindows(t *testing.T) {
-	c := `
-[remote]
-host       = "testhost"
-user       = "testuser"
-pass       = "testpass"
-is_windows = 0
-`
-
-	err := loadReader(strings.NewReader(c))
-	if err != nil {
-		t.Fatalf("Error occured in loadReader: %s", err)
-	}
-	if IsWindows {
-		t.Errorf("IsWindows must be false, but it was not.")
+	if c.Remote.IsWindows != 1 {
+		t.Errorf("c.Remote.IsWindows => %d, wants %d", c.Remote.IsWindows, 1)
 	}
 }
 
 func TestLoadReader_ParseError(t *testing.T) {
-	c := `
+	configString := `
 [remote
 host       = "testhost"
 user       = "testuser"
@@ -66,7 +48,7 @@ pass       = "testpass"
 is_windows = 1
 `
 
-	err := loadReader(strings.NewReader(c))
+	_, err := loadReader(strings.NewReader(configString))
 	if err == nil {
 		t.Error("Error must be occured, but was not.")
 	}

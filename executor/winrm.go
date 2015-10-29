@@ -1,6 +1,10 @@
 package executor
 
-import "strings"
+import (
+	"strings"
+
+	"github.com/unirita/remexec/config"
+)
 
 var powershellTmpArg = `"& {invoke-command -ComputerName [remoteHost]
  -Credential (ConvertTo-SecureString [pass]
@@ -20,11 +24,11 @@ type WinrmExecutor struct {
 	pass string
 }
 
-func NewWinrmExecutor(host, user, pass string) *WinrmExecutor {
+func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	e := new(WinrmExecutor)
-	e.host = host
-	e.user = user
-	e.pass = pass
+	e.host = cfg.Remote.Host
+	e.user = cfg.Remote.User
+	e.pass = cfg.Remote.Pass
 	return e
 }
 

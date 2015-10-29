@@ -1,16 +1,18 @@
 package executor
 
+import "github.com/unirita/remexec/config"
+
 type SSHExecutor struct {
 	host string
 	user string
 	pass string
 }
 
-func NewSSHExecutor(host, user, pass string) *SSHExecutor {
+func NewSSHExecutor(cfg *config.Config) *SSHExecutor {
 	e := new(SSHExecutor)
-	e.host = host
-	e.user = user
-	e.pass = pass
+	e.host = cfg.Remote.Host
+	e.user = cfg.Remote.User
+	e.pass = cfg.Remote.Pass
 	return e
 }
 

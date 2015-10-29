@@ -2,9 +2,11 @@
 
 package executor
 
-func New(host, user, pass string, isWindows bool) Executor {
-	if isWindows {
-		return NewWinexeExecutor(host, user, pass)
+import "github.com/unirita/remexec/config"
+
+func New(cfg *config.Config) Executor {
+	if cfg.Remote.IsWindows != 0 {
+		return NewWinexeExecutor(cfg)
 	}
-	return NewSSHExecutor(host, user, pass)
+	return NewSSHExecutor(cfg)
 }

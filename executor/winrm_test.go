@@ -1,9 +1,17 @@
 package executor
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/unirita/remexec/config"
+)
 
 func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
-	e := NewWinrmExecutor("host", "user", "pass")
+	c := new(config.Config)
+	c.Remote.Host = "host"
+	c.Remote.User = "user"
+	c.Remote.Pass = "pass"
+	e := NewWinrmExecutor(c)
 
 	if e.host != "host" {
 		t.Errorf("The value that you expect to host is not turned on. [%s]", e.host)

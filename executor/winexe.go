@@ -1,16 +1,18 @@
 package executor
 
+import "github.com/unirita/remexec/config"
+
 type WinexeExecutor struct {
 	host string
 	user string
 	pass string
 }
 
-func NewWinexeExecutor(host, user, pass string) *WinexeExecutor {
+func NewWinexeExecutor(cfg *config.Config) *WinexeExecutor {
 	e := new(WinexeExecutor)
-	e.host = host
-	e.user = user
-	e.pass = pass
+	e.host = cfg.Remote.Host
+	e.user = cfg.Remote.User
+	e.pass = cfg.Remote.Pass
 	return e
 }
 

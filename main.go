@@ -30,11 +30,12 @@ func realMain(args *arguments) int {
 		console.Display("REX001E", err)
 		return rc_ERROR
 	}
-	if err := config.Load(args.configPath); err != nil {
+	cfg, err := config.Load(args.configPath)
+	if err != nil {
 		console.Display("REX002E", err)
 		return rc_ERROR
 	}
-	if err := execute(args.command, args.scriptPath); err != nil {
+	if err := execute(cfg, args.command, args.scriptPath); err != nil {
 		console.Display("REX003E", err)
 		return rc_ERROR
 	}
@@ -63,8 +64,8 @@ func validateArgs(args *arguments) error {
 	return nil
 }
 
-func execute(command, scriptPath string) error {
-	e := executor.New(config.Host, config.User, config.Pass, config.IsWindows)
+func execute(cfg *config.Config, command, scriptPath string) error {
+	e := executor.New(cfg)
 	if scriptPath != "" {
 		return e.ExecuteScript(scriptPath)
 	}
