@@ -76,28 +76,24 @@ func TestExecuteCommand_FailedCommand(t *testing.T) {
 	}
 }
 
-func TestExecuteScript_ExecutePowershellScript(t *testing.T) {
+func TestExecuteScript_SuccessScript(t *testing.T) {
+	e := makeTestWinrmExecutor()
 
+	makeCommandFailed()
+	defer restCommandFunc()
+
+	if err := e.ExecuteScript("test.ps1"); err == nil {
+		t.Errorf("Error did not occur.")
+	}
 }
 
-func TestCreatecreatePSCommandArgument_ValueCheck(t *testing.T) {
-	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"echo hoge \"}; echo $?"
+func TestExecuteScript_FailedScript(t *testing.T) {
+	e := makeTestWinrmExecutor()
 
-	result := createPSCommandArgument("hostName", "userName", "password", "echo hoge")
+	makeCommandFailed()
+	defer restCommandFunc()
 
-	if result != expect {
-		t.Errorf("It different from the contents of result is expecting. [%s]", result)
+	if err := e.ExecuteScript("test.ps1"); err == nil {
+		t.Errorf("Error did not occur.")
 	}
-
-}
-
-func TestCreatePSScriptArgument_ValueCheck(t *testing.T) {
-	expect := "& {invoke-command -ComputerName \"hostName\" -Credential (ConvertTo-SecureString \"password\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"userName\", $_) } | % { Get-Credential $_ }) -File \"script.ps1\" }"
-
-	result := createPSScriptArgument("hostName", "userName", "password", "script.ps1")
-
-	if result != expect {
-		t.Errorf("It different from the contents of result is expecting. [%s]", result)
-	}
-
 }
