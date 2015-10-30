@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"bufio"
+	"bytes"
 	"fmt"
 	"io/ioutil"
 	"os"
@@ -81,15 +83,49 @@ func (e *SSHExecutor) ExecuteCommand(command string) error {
 		return fmt.Errorf("Request pseudo terminal error: %s", err)
 	}
 
-	command = fmt.Sprintf("%s; echo RC=$?", command)
-	if err := session.Run(command); err != nil {
+	rc, err := getRC(session.Run(command))
+	if err != nil {
 		return fmt.Errorf("Run command error: %s", err)
 	}
+	fmt.Printf("RC = %d\n", rc)
 
 	return nil
 }
 
 func (e *SSHExecutor) ExecuteScript(path string) error {
-	// TODO: Execute script file with golang.org/x/crypto/ssh
-	return nil
+	command, err := scriptToCommand(path)
+	if err != nil {
+		return err
+	}
+
+	return e.ExecuteCommand(command)
+}
+
+func scriptToCommand(path string) (string, error) {
+	script, err := os.Open(path)
+	if err != nil {
+		return "", fmt.Errorf("Open script file error: %s", err)
+	}
+	defer script.Close()
+
+	commandBuf := new(bytes.Buffer)
+	s := bufio.NewScanner(script)
+
+	commandBuf.WriteString("bash -s << EOF\n")
+	for s.Scan() {
+		commandBuf.Write(s.Bytes())
+		commandBuf.WriteByte('\n')
+	}
+	commandBuf.WriteString("EOF\n")
+	return commandBuf.String(), nil
+}
+
+func getRC(err error) (int, error) {
+	if err != nil {
+		if e2, ok := err.(*ssh.ExitError); ok {
+			return e2.ExitStatus(), nil
+		}
+		return -1, err
+	}
+	return 0, nil
 }
