@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"os"
+	"path/filepath"
 	"testing"
 
 	"github.com/unirita/remexec/config"
@@ -62,5 +64,36 @@ func TestNewSSHExecutor_DefaltPort(t *testing.T) {
 	e := NewSSHExecutor(c)
 	if e.addr != "testhost:22" {
 		t.Errorf("executor.addr => %s, wants %s", e.addr, "testhost:22")
+	}
+}
+
+func TestScriptToCommand_Normal(t *testing.T) {
+	expected := `bash -s << EOF
+#!/bin/sh
+
+echo "test message."
+exit 1
+EOF
+`
+
+	scriptPath := filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "unirita",
+		"remexec", "executor", "_testdata", "sshtest.sh")
+	result, err := scriptToCommand(scriptPath)
+	if err != nil {
+		t.Fatalf("Error occured: %s", err)
+	}
+	if result != expected {
+		t.Errorf("Convert result is not expected value.")
+		t.Log("Expected:")
+		t.Log(expected)
+		t.Log("Actual:")
+		t.Log(result)
+	}
+}
+
+func TestScriptToCommand_Abnormal_NotExist(t *testing.T) {
+	_, err := scriptToCommand("noexists")
+	if err == nil {
+		t.Error("Error must be occured, but it was not.")
 	}
 }
