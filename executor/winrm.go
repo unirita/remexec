@@ -1,25 +1,32 @@
 package executor
 
 import (
-	"fmt"
+	"os"
 	"os/exec"
-	"strings"
 
 	"github.com/unirita/remexec/config"
 )
 
-var psExeTmpArgByCmd = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -ScriptBlock{Invoke-Expression $args[0]} -argumentList \"[cmd] \"}"
+const (
+	powershellExeAbsPath    = "C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
+	powershellExeFileOption = "-File"
+	winrmScriptPath         = "script\\remote.ps1"
+)
 
-var psExeTmpArgByScript = "& {invoke-command -ComputerName \"[remoteHost]\" -Credential (ConvertTo-SecureString \"[pass]\" -AsPlainText -Force | % { New-Object System.Management.Automation.PSCredential(\"[userName]\", $_) } | % { Get-Credential $_ }) -File \"[script]\" }"
-
-const powershellExeAbsPath = "C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
-const powershellExeOption = "-Command"
+const (
+	IsCommand    = "e"
+	IsScriptFile = "f"
+)
 
 type WinrmExecutor struct {
 	host string
 	user string
 	pass string
 }
+
+type commandRunFunc func(*exec.Cmd) error
+
+var cmdRun commandRunFunc = run
 
 func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	e := new(WinrmExecutor)
@@ -30,35 +37,37 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 }
 
 func (e *WinrmExecutor) ExecuteCommand(command string) error {
-	// TODO: Call command with powershell.exe
-	cmdArg := createPSCommandArgument(e.host, e.user, e.pass, command)
-	cmd := exec.Command(powershellExeAbsPath, powershellExeOption, cmdArg)
+	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, winrmScriptPath, IsCommand, e.host, e.user, e.pass, command)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
 
-	result, err := cmd.Output()
+	err := cmdRun(cmd)
 	if err != nil {
 		return err
 	}
 
-	fmt.Printf("%s", result)
+	return nil
+}
+
+func run(cmd *exec.Cmd) error {
+	err := cmd.Run()
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
 
 func (e *WinrmExecutor) ExecuteScript(path string) error {
 	// TODO: Execute script file with powershell.exe
+	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, winrmScriptPath, IsScriptFile, e.host, e.user, e.pass, path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	err := cmdRun(cmd)
+	if err != nil {
+		return err
+	}
+
 	return nil
-}
-
-func createPSCommandArgument(host, user, pass, cmd string) string {
-	r := strings.NewReplacer("[remoteHost]", host, "[userName]", user, "[pass]", pass, "[cmd]", cmd)
-	arg := r.Replace(psExeTmpArgByCmd)
-
-	return arg
-}
-
-func createPSScriptArgument(host, user, pass, script string) string {
-	r := strings.NewReplacer("[remoteHost]", host, "[userName]", user, "[pass]", pass, "[script]", script)
-	arg := r.Replace(psExeTmpArgByScript)
-
-	return arg
 }
