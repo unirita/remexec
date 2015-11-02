@@ -9,17 +9,15 @@ import (
 	"github.com/unirita/remexec/config"
 )
 
-const (
-	powershellExeAbsPath    = "C:\\WINDOWS\\system32\\WindowsPowerShell\\v1.0\\powershell.exe"
-	powershellExeFileOption = "-File"
-	cmdExeScriptPath        = "script\\remotecmdexe.ps1"
-	localScrptExePath       = "script\\localscriptexe.ps1"
-)
+const option = "-File"
 
 type WinrmExecutor struct {
-	host string
-	user string
-	pass string
+	host       string
+	user       string
+	pass       string
+	powershell string
+	winrmCmd   string
+	winrmLocal string
 }
 
 type commandRunFunc func(*exec.Cmd) error
@@ -31,11 +29,14 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	e.host = cfg.Remote.Host
 	e.user = cfg.Remote.User
 	e.pass = cfg.Remote.Pass
+	e.powershell = cfg.WinRM.PowershellPath
+	e.winrmCmd = cfg.WinRM.WinRMCmdPath
+	e.winrmLocal = cfg.WinRM.WinRMLocalPath
 	return e
 }
 
 func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
-	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, cmdExeScriptPath, e.host, e.user, e.pass, command)
+	cmd := exec.Command(e.powershell, option, e.winrmCmd, e.host, e.user, e.pass, command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
@@ -48,7 +49,7 @@ func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
 }
 
 func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
-	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, localScrptExePath, e.host, e.user, e.pass, path)
+	cmd := exec.Command(e.powershell, option, e.winrmLocal, e.host, e.user, e.pass, path)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
