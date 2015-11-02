@@ -36,8 +36,8 @@ func (e *WinexeExecutor) ExecuteCommand(command string) (int, error) {
 }
 
 func (e *WinexeExecutor) ExecuteScript(path string) (int, error) {
-	// TODO: Execute script file with winexe
-	return 0, nil
+	// Unsupported.
+	return -1, fmt.Errorf("-f option does not support remote Windows execution from Unix.")
 }
 
 func (e *WinexeExecutor) getRC(err error) (int, error) {
