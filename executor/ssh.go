@@ -94,7 +94,7 @@ func (e *SSHExecutor) execute(command string) (int, error) {
 		return -1, fmt.Errorf("Request pseudo terminal error: %s", err)
 	}
 
-	rc, err := getRC(session.Run(command))
+	rc, err := e.getRC(session.Run(command))
 	if err != nil {
 		return -1, fmt.Errorf("Run command error: %s", err)
 	}
@@ -129,6 +129,16 @@ func (e *SSHExecutor) ExecuteScript(pathWithParam string) error {
 	}
 	fmt.Printf("RC = %d\n", rc)
 	return nil
+}
+
+func (e *SSHExecutor) getRC(err error) (int, error) {
+	if err != nil {
+		if e2, ok := err.(*ssh.ExitError); ok {
+			return e2.ExitStatus(), nil
+		}
+		return -1, err
+	}
+	return 0, nil
 }
 
 func splitPathAndParam(pathWithParam string) (string, string) {
@@ -173,14 +183,4 @@ func generateExecuteCommand(remotePath, param string) string {
 
 func generateCleanCommand(remotePath string) string {
 	return fmt.Sprintf("rm -f %s", remotePath)
-}
-
-func getRC(err error) (int, error) {
-	if err != nil {
-		if e2, ok := err.(*ssh.ExitError); ok {
-			return e2.ExitStatus(), nil
-		}
-		return -1, err
-	}
-	return 0, nil
 }
