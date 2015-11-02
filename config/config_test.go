@@ -24,6 +24,7 @@ is_windows = 1
 port             = 1234
 use_certificate  = 1
 private_key_file = "test.pem"
+temporary_dir    = "/tmp"
 `
 
 	c, err := loadReader(strings.NewReader(configString))
@@ -50,6 +51,9 @@ private_key_file = "test.pem"
 	}
 	if c.SSH.PrivateKeyFile != "test.pem" {
 		t.Errorf("c.SSH.PrivateKeyFile => %s, wants %s", c.SSH.PrivateKeyFile, "test.pem")
+	}
+	if c.SSH.TemporaryDir != "/tmp" {
+		t.Errorf("c.SSH.TemporaryDir => %s, wants %s", c.SSH.TemporaryDir, "/tmp")
 	}
 }
 
@@ -80,6 +84,9 @@ func TestLoadReader_Normal_Empty(t *testing.T) {
 	}
 	if c.SSH.PrivateKeyFile != "" {
 		t.Errorf("c.SSH.PrivateKeyFile => %s, must be empty", c.SSH.PrivateKeyFile)
+	}
+	if c.SSH.TemporaryDir != "" {
+		t.Errorf("c.SSH.TemporaryDir => %s, must be empty", c.SSH.TemporaryDir)
 	}
 }
 

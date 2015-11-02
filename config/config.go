@@ -27,6 +27,7 @@ type SSHSection struct {
 	Port           int    `toml:"port"`
 	UseCertificate int    `toml:"use_certificate"`
 	PrivateKeyFile string `toml:"private_key_file"`
+	TemporaryDir   string `toml:"temporary_dir"`
 }
 
 // Load loads config from file which is in path.

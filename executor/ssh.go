@@ -6,18 +6,25 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"path/filepath"
+	"strings"
+	"time"
 
 	"golang.org/x/crypto/ssh"
 
 	"github.com/unirita/remexec/config"
 )
 
-const defaultPort = 22
+const (
+	defaultPort   = 22
+	defaultTmpDir = "/tmp"
+)
 
 // SSHExecutor is a Executor which executes remote command with SSH.
 type SSHExecutor struct {
 	config *ssh.ClientConfig
 	addr   string
+	tmpDir string
 }
 
 // NewSSHExecutor creates a SSHExecutor and set it client config .
@@ -27,6 +34,10 @@ func NewSSHExecutor(cfg *config.Config) *SSHExecutor {
 		e.addr = fmt.Sprintf("%s:%d", cfg.Remote.Host, defaultPort)
 	} else {
 		e.addr = fmt.Sprintf("%s:%d", cfg.Remote.Host, cfg.SSH.Port)
+	}
+	e.tmpDir = cfg.SSH.TemporaryDir
+	if e.tmpDir == "" {
+		e.tmpDir = defaultTmpDir
 	}
 
 	e.config = new(ssh.ClientConfig)
@@ -57,16 +68,16 @@ func publicKeyFile(file string) ssh.AuthMethod {
 	return ssh.PublicKeys(key)
 }
 
-func (e *SSHExecutor) ExecuteCommand(command string) error {
+func (e *SSHExecutor) execute(command string) (int, error) {
 	conn, err := ssh.Dial("tcp", e.addr, e.config)
 	if err != nil {
-		return fmt.Errorf("Dial error: %s", err)
+		return -1, fmt.Errorf("Dial error: %s", err)
 	}
 	defer conn.Close()
 
 	session, err := conn.NewSession()
 	if err != nil {
-		return fmt.Errorf("Create session error: %s", err)
+		return -1, fmt.Errorf("Create session error: %s", err)
 	}
 	defer session.Close()
 
@@ -80,29 +91,65 @@ func (e *SSHExecutor) ExecuteCommand(command string) error {
 	}
 
 	if err := session.RequestPty("xterm", 80, 40, modes); err != nil {
-		return fmt.Errorf("Request pseudo terminal error: %s", err)
+		return -1, fmt.Errorf("Request pseudo terminal error: %s", err)
 	}
 
 	rc, err := getRC(session.Run(command))
 	if err != nil {
-		return fmt.Errorf("Run command error: %s", err)
+		return -1, fmt.Errorf("Run command error: %s", err)
 	}
-	fmt.Printf("RC = %d\n", rc)
 
-	return nil
+	return rc, nil
 }
 
-func (e *SSHExecutor) ExecuteScript(path string) error {
-	command, err := scriptToCommand(path)
+func (e *SSHExecutor) ExecuteCommand(command string) error {
+	rc, err := e.execute(command)
 	if err != nil {
 		return err
 	}
-
-	return e.ExecuteCommand(command)
+	fmt.Printf("RC = %d\n", rc)
+	return nil
 }
 
-func scriptToCommand(path string) (string, error) {
-	script, err := os.Open(path)
+func (e *SSHExecutor) ExecuteScript(pathWithParam string) error {
+	path, param := splitPathAndParam(pathWithParam)
+	remotePath := generateRemotePath(path, e.tmpDir)
+	command, err := generateCreateCommand(path, remotePath)
+	if err != nil {
+		return err
+	}
+	if _, err := e.execute(command); err != nil {
+		return err
+	}
+	defer e.execute(generateCleanCommand(remotePath))
+
+	rc, err := e.execute(generateExecuteCommand(remotePath, param))
+	if err != nil {
+		return err
+	}
+	fmt.Printf("RC = %d\n", rc)
+	return nil
+}
+
+func splitPathAndParam(pathWithParam string) (string, string) {
+	pathBuf := strings.SplitN(pathWithParam, " ", 2)
+	path := pathBuf[0]
+	param := ""
+	if len(pathBuf) > 1 {
+		param = pathBuf[1]
+	}
+
+	return path, param
+}
+
+func generateRemotePath(localPath, tmpDir string) string {
+	name := fmt.Sprintf("%s/%s.%s", tmpDir,
+		time.Now().Format("20060102150405.000"), filepath.Base(localPath))
+	return name
+}
+
+func generateCreateCommand(localPath, remotePath string) (string, error) {
+	script, err := os.Open(localPath)
 	if err != nil {
 		return "", fmt.Errorf("Open script file error: %s", err)
 	}
@@ -111,13 +158,21 @@ func scriptToCommand(path string) (string, error) {
 	commandBuf := new(bytes.Buffer)
 	s := bufio.NewScanner(script)
 
-	commandBuf.WriteString("bash -s << EOF\n")
+	commandBuf.WriteString(fmt.Sprintf("tee %s > /dev/null << EOF\n", remotePath))
 	for s.Scan() {
-		commandBuf.Write(s.Bytes())
+		commandBuf.WriteString(strings.Replace(s.Text(), `$`, `\$`, -1))
 		commandBuf.WriteByte('\n')
 	}
 	commandBuf.WriteString("EOF\n")
 	return commandBuf.String(), nil
+}
+
+func generateExecuteCommand(remotePath, param string) string {
+	return fmt.Sprintf("chmod +x %s; %s %s", remotePath, remotePath, param)
+}
+
+func generateCleanCommand(remotePath string) string {
+	return fmt.Sprintf("rm -f %s", remotePath)
 }
 
 func getRC(err error) (int, error) {

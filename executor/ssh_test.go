@@ -67,18 +67,39 @@ func TestNewSSHExecutor_DefaltPort(t *testing.T) {
 	}
 }
 
-func TestScriptToCommand_Normal(t *testing.T) {
-	expected := `bash -s << EOF
+func TestSplitPathWithParam_Normal(t *testing.T) {
+	path, param := splitPathAndParam("/home/gocuto/test.sh test1 test2 test3")
+	if path != "/home/gocuto/test.sh" {
+		t.Errorf("path => %s, wants %s", path, "/home/gocuto/test.sh")
+	}
+	if param != "test1 test2 test3" {
+		t.Errorf("param => %s, wants %s", param, "test1 test2 test3")
+	}
+}
+
+func TestSplitPathWithParam_NoParam(t *testing.T) {
+	path, param := splitPathAndParam("/home/gocuto/test.sh")
+	if path != "/home/gocuto/test.sh" {
+		t.Errorf("path => %s, wants %s", path, "/home/gocuto/test.sh")
+	}
+	if param != "" {
+		t.Errorf("param => %s, must be empty but was not.")
+	}
+}
+
+func TestGenerateCreateCommand_Normal(t *testing.T) {
+	expected := `tee remote.sh > /dev/null << EOF
 #!/bin/sh
 
 echo "test message."
+echo \$1
 exit 1
 EOF
 `
 
 	scriptPath := filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "unirita",
 		"remexec", "executor", "_testdata", "sshtest.sh")
-	result, err := scriptToCommand(scriptPath)
+	result, err := generateCreateCommand(scriptPath, "remote.sh")
 	if err != nil {
 		t.Fatalf("Error occured: %s", err)
 	}
@@ -91,8 +112,8 @@ EOF
 	}
 }
 
-func TestScriptToCommand_Abnormal_NotExist(t *testing.T) {
-	_, err := scriptToCommand("noexists")
+func TestGenerateCreateCommand_Abnormal_NotExist(t *testing.T) {
+	_, err := generateCreateCommand("noexists", "remote.sh")
 	if err == nil {
 		t.Error("Error must be occured, but it was not.")
 	}
