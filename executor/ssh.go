@@ -107,10 +107,10 @@ func (e *SSHExecutor) ExecuteScript(pathWithParam string) (int, error) {
 	remotePath := generateRemotePath(path, e.tmpDir)
 	command, err := generateCreateCommand(path, remotePath)
 	if err != nil {
-		return err
+		return -1, err
 	}
 	if _, err := e.ExecuteCommand(command); err != nil {
-		return err
+		return -1, err
 	}
 	defer e.ExecuteCommand(generateCleanCommand(remotePath))
 
