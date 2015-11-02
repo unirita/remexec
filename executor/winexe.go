@@ -36,7 +36,7 @@ func (e *WinexeExecutor) ExecuteCommand(command string) error {
 	if err != nil {
 		return fmt.Errorf("Run command error: %s", err)
 	}
-	fmt.Println("RC = %d", rc)
+	fmt.Printf("RC = %d\n", rc)
 
 	return nil
 }
