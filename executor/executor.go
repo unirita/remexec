@@ -2,6 +2,6 @@
 package executor
 
 type Executor interface {
-	ExecuteCommand(string) error
-	ExecuteScript(string) error
+	ExecuteCommand(string) (int, error)
+	ExecuteScript(string) (int, error)
 }

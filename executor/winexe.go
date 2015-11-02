@@ -23,7 +23,7 @@ func NewWinexeExecutor(cfg *config.Config) *WinexeExecutor {
 	return e
 }
 
-func (e *WinexeExecutor) ExecuteCommand(command string) error {
+func (e *WinexeExecutor) ExecuteCommand(command string) (int, error) {
 	userParam := fmt.Sprintf("%s%%%s", e.user, e.pass)
 	hostParam := fmt.Sprintf("//%s", e.host)
 	commandParam := fmt.Sprintf("cmd /c %s", command)
@@ -32,18 +32,12 @@ func (e *WinexeExecutor) ExecuteCommand(command string) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	rc, err := e.getRC(cmd.Run())
-	if err != nil {
-		return fmt.Errorf("Run command error: %s", err)
-	}
-	fmt.Printf("RC = %d\n", rc)
-
-	return nil
+	return e.getRC(cmd.Run())
 }
 
-func (e *WinexeExecutor) ExecuteScript(path string) error {
+func (e *WinexeExecutor) ExecuteScript(path string) (int, error) {
 	// TODO: Execute script file with winexe
-	return nil
+	return 0, nil
 }
 
 func (e *WinexeExecutor) getRC(err error) (int, error) {

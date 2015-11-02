@@ -68,7 +68,7 @@ func publicKeyFile(file string) ssh.AuthMethod {
 	return ssh.PublicKeys(key)
 }
 
-func (e *SSHExecutor) execute(command string) (int, error) {
+func (e *SSHExecutor) ExecuteCommand(command string) (int, error) {
 	conn, err := ssh.Dial("tcp", e.addr, e.config)
 	if err != nil {
 		return -1, fmt.Errorf("Dial error: %s", err)
@@ -102,33 +102,19 @@ func (e *SSHExecutor) execute(command string) (int, error) {
 	return rc, nil
 }
 
-func (e *SSHExecutor) ExecuteCommand(command string) error {
-	rc, err := e.execute(command)
-	if err != nil {
-		return err
-	}
-	fmt.Printf("RC = %d\n", rc)
-	return nil
-}
-
-func (e *SSHExecutor) ExecuteScript(pathWithParam string) error {
+func (e *SSHExecutor) ExecuteScript(pathWithParam string) (int, error) {
 	path, param := splitPathAndParam(pathWithParam)
 	remotePath := generateRemotePath(path, e.tmpDir)
 	command, err := generateCreateCommand(path, remotePath)
 	if err != nil {
 		return err
 	}
-	if _, err := e.execute(command); err != nil {
+	if _, err := e.ExecuteCommand(command); err != nil {
 		return err
 	}
-	defer e.execute(generateCleanCommand(remotePath))
+	defer e.ExecuteCommand(generateCleanCommand(remotePath))
 
-	rc, err := e.execute(generateExecuteCommand(remotePath, param))
-	if err != nil {
-		return err
-	}
-	fmt.Printf("RC = %d\n", rc)
-	return nil
+	return e.ExecuteCommand(generateExecuteCommand(remotePath, param))
 }
 
 func (e *SSHExecutor) getRC(err error) (int, error) {

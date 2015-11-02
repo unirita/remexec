@@ -16,10 +16,7 @@ type arguments struct {
 	scriptPath string
 }
 
-const (
-	rc_OK    = 0
-	rc_ERROR = 1
-)
+const rc_ERROR = 255
 
 func main() {
 	os.Exit(realMain(fetchArgs()))
@@ -35,11 +32,13 @@ func realMain(args *arguments) int {
 		console.Display("REX002E", err)
 		return rc_ERROR
 	}
-	if err := execute(cfg, args.command, args.scriptPath); err != nil {
+	rc, err := execute(cfg, args.command, args.scriptPath)
+	if err != nil {
 		console.Display("REX003E", err)
 		return rc_ERROR
 	}
-	return rc_OK
+
+	return rc
 }
 
 func fetchArgs() *arguments {
@@ -64,7 +63,7 @@ func validateArgs(args *arguments) error {
 	return nil
 }
 
-func execute(cfg *config.Config, command, scriptPath string) error {
+func execute(cfg *config.Config, command, scriptPath string) (int, error) {
 	e := executor.New(cfg)
 	if scriptPath != "" {
 		return e.ExecuteScript(scriptPath)
