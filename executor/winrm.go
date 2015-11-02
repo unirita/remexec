@@ -1,8 +1,10 @@
 package executor
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"github.com/unirita/remexec/config"
 )
@@ -32,17 +34,30 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	return e
 }
 
-func (e *WinrmExecutor) ExecuteCommand(command string) error {
+func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
 	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, cmdExeScriptPath, e.host, e.user, e.pass, command)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	err := cmdRun(cmd)
+	rc, err := e.getRC(cmdRun(cmd))
 	if err != nil {
-		return err
+		return -1, fmt.Errorf("Run command error: %s", err)
 	}
 
-	return nil
+	return rc, nil
+}
+
+func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
+	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, localScrptExePath, e.host, e.user, e.pass, path)
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	rc, err := e.getRC(cmdRun(cmd))
+	if err != nil {
+		return -1, fmt.Errorf("Run command error: %s", err)
+	}
+
+	return rc, nil
 }
 
 func run(cmd *exec.Cmd) error {
@@ -54,16 +69,15 @@ func run(cmd *exec.Cmd) error {
 	return nil
 }
 
-func (e *WinrmExecutor) ExecuteScript(path string) error {
-	// TODO: Execute script file with powershell.exe
-	cmd := exec.Command(powershellExeAbsPath, powershellExeFileOption, localScrptExePath, e.host, e.user, e.pass, path)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-
-	err := cmdRun(cmd)
+func (e *WinrmExecutor) getRC(err error) (int, error) {
 	if err != nil {
-		return err
+		if exiterr, ok := err.(*exec.ExitError); ok {
+			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
+				return status.ExitStatus(), nil
+			}
+			return -1, err
+		}
+		return -1, err
 	}
-
-	return nil
+	return 0, nil
 }
