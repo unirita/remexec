@@ -33,9 +33,8 @@ type SSHSection struct {
 
 // WinRMSection is [remote] section in config file.
 type WinRMSection struct {
-	PowershellPath string `toml:"powershell_path"`
-	WinRMCmdPath   string `toml:"winrm_cmd_path"`
-	WinRMLocalPath string `toml:"winrm_local_path"`
+	PowershellPath  string `toml:"powershell_path"`
+	WinRMScriptPath string `toml:"winrm_script_path"`
 }
 
 // Load loads config from file which is in path.

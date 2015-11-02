@@ -16,9 +16,13 @@ type WinrmExecutor struct {
 	user       string
 	pass       string
 	powershell string
-	winrmCmd   string
-	winrmLocal string
+	winrm      string
 }
+
+const (
+	WINRM_CMD   = "cmd"
+	WINRM_LOCAL = "localscript"
+)
 
 type commandRunFunc func(*exec.Cmd) error
 
@@ -30,15 +34,13 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	e.user = cfg.Remote.User
 	e.pass = cfg.Remote.Pass
 	e.powershell = cfg.WinRM.PowershellPath
-	e.winrmCmd = cfg.WinRM.WinRMCmdPath
-	e.winrmLocal = cfg.WinRM.WinRMLocalPath
+	e.winrm = cfg.WinRM.WinRMScriptPath
+
 	return e
 }
 
 func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
-	cmd := exec.Command(e.powershell, option, e.winrmCmd, e.host, e.user, e.pass, command)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := e.createCmd(command, WINRM_CMD)
 
 	rc, err := e.getRC(cmdRun(cmd))
 	if err != nil {
@@ -49,9 +51,7 @@ func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
 }
 
 func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
-	cmd := exec.Command(e.powershell, option, e.winrmLocal, e.host, e.user, e.pass, path)
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
+	cmd := e.createCmd(path, WINRM_LOCAL)
 
 	rc, err := e.getRC(cmdRun(cmd))
 	if err != nil {
@@ -59,6 +59,21 @@ func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
 	}
 
 	return rc, nil
+}
+
+func (e *WinrmExecutor) createCmd(execution string, scripttype string) *exec.Cmd {
+	cmd := new(exec.Cmd)
+	if scripttype == WINRM_CMD {
+		cmd = exec.Command(e.powershell, option, e.winrm, WINRM_CMD, e.host, e.user, e.pass, execution)
+	} else {
+		cmd = exec.Command(e.powershell, option, e.winrm, WINRM_LOCAL, e.host, e.user, e.pass, execution)
+	}
+
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+
+	return cmd
+
 }
 
 func run(cmd *exec.Cmd) error {
