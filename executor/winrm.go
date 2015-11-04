@@ -27,7 +27,7 @@ type commandRunFunc func(*exec.Cmd) error
 
 var cmdRun commandRunFunc = run
 
-func NewWinrmExecutor(cfg *config.Config) *WinRMExecutor {
+func NewWinRMExecutor(cfg *config.Config) *WinRMExecutor {
 	e := new(WinRMExecutor)
 	e.host = cfg.Remote.Host
 	e.user = cfg.Remote.User

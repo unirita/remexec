@@ -41,7 +41,7 @@ func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 	c.Remote.User = "user"
 	c.Remote.Pass = "pass"
 	c.WinRM.WinRMScriptPath = "winrm.ps1"
-	e := NewWinrmExecutor(c)
+	e := NewWinRMExecutor(c)
 
 	if e.host != "host" {
 		t.Errorf("The value that you expect to host is not turned on. [%s]", e.host)
