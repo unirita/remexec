@@ -178,12 +178,30 @@ func TestCreateCmd_ValueCheckLocalScript_Argument(t *testing.T) {
 
 }
 
-func TestExecuteWinRM_WinRMExecutionSuccess(t *testing.T) {
+func TestExecuteWinRM_WinRMExecutionSuccessCmd(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	makeWinRMExecutionSuccess()
 	defer restoreCommandFunc()
 
 	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	rc, err := e.executeWinRM(cmd)
+
+	if rc != 0 {
+		t.Errorf("return code => %d, wants => %d ", rc, 0)
+	}
+
+	if err != nil {
+		t.Errorf("An error has occurred that is not expected. %s", err)
+	}
+}
+
+func TestExecuteWinRM_WinRMExecutionSuccessLocalScript(t *testing.T) {
+	e := makeTestWinrmExecutor()
+	makeWinRMExecutionSuccess()
+	defer restoreCommandFunc()
+
+	cmd := e.createCmd("test.ps1", WINRM_LOCAL)
 
 	rc, err := e.executeWinRM(cmd)
 
@@ -229,7 +247,27 @@ func TestExecuteWinRM_NotExistWinRMScript(t *testing.T) {
 	rc, err := e.executeWinRM(cmd)
 
 	if rc == 0 {
-		t.Errorf("return code => %d, wants => %d ", rc, -1)
+		t.Errorf("return code is 0")
+	}
+
+	if err != nil {
+		t.Errorf("An error has occurred that is not expected. %s", err)
+	}
+}
+
+//Build environment windows only
+func _TestExecuteWinRM_NoExistCredential(t *testing.T) {
+	e := makeTestWinrmExecutor()
+	e.host = "noexist"
+	e.winrm = "..\\script\\winrm.ps1"
+	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	cmd.Stderr = nil
+
+	rc, err := e.executeWinRM(cmd)
+
+	if rc != 250 {
+		t.Errorf("return code => %d, wants => %d ", rc, 250)
 	}
 
 	if err != nil {
