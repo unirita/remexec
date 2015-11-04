@@ -192,7 +192,7 @@ func TestExecuteWinRM_WinRMExecutionSuccess(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Errorf("An error has occurred that is not expected.")
+		t.Errorf("An error has occurred that is not expected. %s", err)
 	}
 }
 
@@ -233,6 +233,6 @@ func TestExecuteWinRM_NotExistWinRMScript(t *testing.T) {
 	}
 
 	if err != nil {
-		t.Errorf("An error has occurred that is not expected.")
+		t.Errorf("An error has occurred that is not expected. %s", err)
 	}
 }
