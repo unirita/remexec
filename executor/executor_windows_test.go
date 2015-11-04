@@ -13,7 +13,7 @@ func TestNew_LocalWindowsAndRemoteWindows(t *testing.T) {
 	c.Remote.Pass = "testpass"
 	c.Remote.IsWindows = 1
 	e := New(c)
-	if _, ok := e.(*WinrmExecutor); !ok {
+	if _, ok := e.(*WinRMExecutor); !ok {
 		t.Error("Type of executor must be PowershellExecuter, but was not.")
 	}
 }

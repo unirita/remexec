@@ -10,8 +10,8 @@ import (
 	"github.com/unirita/remexec/config"
 )
 
-func makeTestWinrmExecutor() *WinrmExecutor {
-	e := new(WinrmExecutor)
+func makeTestWinrmExecutor() *WinRMExecutor {
+	e := new(WinRMExecutor)
 	e.host = "host"
 	e.user = "user"
 	e.pass = "pass"

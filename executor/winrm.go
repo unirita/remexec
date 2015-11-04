@@ -11,7 +11,7 @@ import (
 	"github.com/unirita/remexec/config"
 )
 
-type WinrmExecutor struct {
+type WinRMExecutor struct {
 	host  string
 	user  string
 	pass  string
@@ -27,8 +27,8 @@ type commandRunFunc func(*exec.Cmd) error
 
 var cmdRun commandRunFunc = run
 
-func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
-	e := new(WinrmExecutor)
+func NewWinrmExecutor(cfg *config.Config) *WinRMExecutor {
+	e := new(WinRMExecutor)
 	e.host = cfg.Remote.Host
 	e.user = cfg.Remote.User
 	e.pass = cfg.Remote.Pass
@@ -37,17 +37,17 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 	return e
 }
 
-func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
+func (e *WinRMExecutor) ExecuteCommand(command string) (int, error) {
 	cmd := e.createCmd(command, WINRM_CMD)
 	return e.executeWinRM(cmd)
 }
 
-func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
+func (e *WinRMExecutor) ExecuteScript(path string) (int, error) {
 	cmd := e.createCmd(path, WINRM_LOCAL)
 	return e.executeWinRM(cmd)
 }
 
-func (e *WinrmExecutor) executeWinRM(cmd *exec.Cmd) (int, error) {
+func (e *WinRMExecutor) executeWinRM(cmd *exec.Cmd) (int, error) {
 	rc, err := e.getRC(cmdRun(cmd))
 	if err != nil {
 		return -1, fmt.Errorf("Run command error: %s", err)
@@ -56,7 +56,7 @@ func (e *WinrmExecutor) executeWinRM(cmd *exec.Cmd) (int, error) {
 	return rc, nil
 }
 
-func (e *WinrmExecutor) createCmd(execution string, scripttype string) *exec.Cmd {
+func (e *WinRMExecutor) createCmd(execution string, scripttype string) *exec.Cmd {
 	cmd := new(exec.Cmd)
 	powershell := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
 	option := "-File"
@@ -77,7 +77,7 @@ func run(cmd *exec.Cmd) error {
 	return nil
 }
 
-func (e *WinrmExecutor) getRC(err error) (int, error) {
+func (e *WinRMExecutor) getRC(err error) (int, error) {
 	if err != nil {
 		if exiterr, ok := err.(*exec.ExitError); ok {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
