@@ -1,7 +1,10 @@
 package executor
 
 import (
+	"errors"
 	"os"
+	"os/exec"
+	"strings"
 	"testing"
 
 	"github.com/unirita/remexec/config"
@@ -17,21 +20,20 @@ func makeTestWinrmExecutor() *WinrmExecutor {
 	return e
 }
 
-//func makeCmmandSuccess() {
-//	cmdRun = func(*exec.Cmd) error {
-//		return nil
-//	}
-//}
+func makeWinRMExecutionSuccess() {
+	cmdRun = func(*exec.Cmd) error {
+		return nil
+	}
+}
 
-//func restoreCommandFunc() {
-//	cmdRun = run
-//}
-
-//func makeCommandFailed() {
-//	cmdRun = func(*exec.Cmd) error {
-//		return errors.New("error")
-//	}
-//}
+func makeCommandFailed() {
+	cmdRun = func(*exec.Cmd) error {
+		return errors.New("command failed.")
+	}
+}
+func restoreCommandFunc() {
+	cmdRun = run
+}
 
 func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 	c := new(config.Config)
@@ -59,18 +61,17 @@ func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 
 }
 
-func TestCreateCmd_ValueCheckCmd_ArgumentOne(t *testing.T) {
+func TestCreateCmd_ValueCheckCmd_Normal(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("ipconfig", WINRM_CMD)
 
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
+	path := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
 
 	if cmd.Args[0] != path {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
 	}
 
-	if cmd.Args[1] != option {
+	if cmd.Args[1] != "-File" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
 	}
 
@@ -99,97 +100,41 @@ func TestCreateCmd_ValueCheckCmd_ArgumentOne(t *testing.T) {
 	}
 }
 
-func TestCreateCmd_ValueCheckCmd_ArgumentTwo(t *testing.T) {
+func TestCreateCmd_ValueCheckCmd_Argument(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("dir c:\\", WINRM_CMD)
-
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
-
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
-	}
-
-	if cmd.Args[1] != option {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
-	}
-
-	if cmd.Args[2] != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
-	}
-
-	if cmd.Args[3] != WINRM_CMD {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[3])
-	}
-
-	if cmd.Args[4] != "host" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[4])
-	}
-
-	if cmd.Args[5] != "user" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[5])
-	}
-
-	if cmd.Args[6] != "pass" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[6])
-	}
 
 	if cmd.Args[7] != "dir c:\\" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
-}
 
-func TestCreateCmd_ValueCheckCmd_ArgumentThree(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	cmd := e.createCmd("c:\\test.ps1 arg1 arg2", WINRM_CMD)
-
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
-
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
+	cmd = e.createCmd("c:\remote_script.ps1", WINRM_CMD)
+	if cmd.Args[7] != "c:\remote_script.ps1" {
+		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
 
-	if cmd.Args[1] != option {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
+	cmd = e.createCmd("c:\remote_script.ps1 arg1", WINRM_CMD)
+	if cmd.Args[7] != "c:\remote_script.ps1 arg1" {
+		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
 
-	if cmd.Args[2] != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
-	}
-
-	if cmd.Args[3] != WINRM_CMD {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[3])
-	}
-
-	if cmd.Args[4] != "host" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[4])
-	}
-
-	if cmd.Args[5] != "user" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[5])
-	}
-
-	if cmd.Args[6] != "pass" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[6])
-	}
-
-	if cmd.Args[7] != "c:\\test.ps1 arg1 arg2" {
+	cmd = e.createCmd("c:\remote_script.ps1 arg1 arg2", WINRM_CMD)
+	if cmd.Args[7] != "c:\remote_script.ps1 arg1 arg2" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
 }
 
-func TestCreateCmd_ValueCheckLocalScript_NoArgument(t *testing.T) {
+func TestCreateCmd_ValueCheckLocalScript_Normal(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("local_script.ps1", WINRM_LOCAL)
 
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
+	path := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
+
 	if cmd.Args[0] != path {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
 	}
 
-	if cmd.Args[1] != option {
+	if cmd.Args[1] != "-File" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
 	}
 
@@ -218,119 +163,76 @@ func TestCreateCmd_ValueCheckLocalScript_NoArgument(t *testing.T) {
 	}
 }
 
-func TestCreateCmd_ValueCheckLocalScript_ArgumentOne(t *testing.T) {
+func TestCreateCmd_ValueCheckLocalScript_Argument(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("local_script.ps1 arg1", WINRM_LOCAL)
-
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
-	}
-
-	if cmd.Args[1] != option {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
-	}
-
-	if cmd.Args[2] != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
-	}
-
-	if cmd.Args[3] != WINRM_LOCAL {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[3])
-	}
-
-	if cmd.Args[4] != "host" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[4])
-	}
-
-	if cmd.Args[5] != "user" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[5])
-	}
-
-	if cmd.Args[6] != "pass" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[6])
-	}
 
 	if cmd.Args[7] != "local_script.ps1 arg1" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
-}
 
-func TestCreateCmd_ValueCheckLocalScript_ArgumentTwo(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	cmd := e.createCmd("local_script.ps1 arg1 arg2", WINRM_LOCAL)
-
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
-	}
-
-	if cmd.Args[1] != option {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
-	}
-
-	if cmd.Args[2] != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
-	}
-
-	if cmd.Args[3] != WINRM_LOCAL {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[3])
-	}
-
-	if cmd.Args[4] != "host" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[4])
-	}
-
-	if cmd.Args[5] != "user" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[5])
-	}
-
-	if cmd.Args[6] != "pass" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[6])
-	}
-
+	cmd = e.createCmd("local_script.ps1 arg1 arg2", WINRM_LOCAL)
 	if cmd.Args[7] != "local_script.ps1 arg1 arg2" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
 	}
+
 }
 
-func TestCreateCmd_ValueCheckLocalScript_ArgumentThree(t *testing.T) {
+func TestExecuteWinRM_WinRMExecutionSuccess(t *testing.T) {
 	e := makeTestWinrmExecutor()
-	cmd := e.createCmd("local_script.ps1 arg1 arg2 arg3", WINRM_LOCAL)
+	makeWinRMExecutionSuccess()
+	defer restoreCommandFunc()
 
-	path := os.Getenv("PSModulePath")
-	path += "powershell.exe"
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
+	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	rc, err := e.executeWinRM(cmd)
+
+	if rc != 0 {
+		t.Errorf("return code => %d, wants => %d ", rc, 0)
 	}
 
-	if cmd.Args[1] != option {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
+	if err != nil {
+		t.Errorf("An error has occurred that is not expected.")
+	}
+}
+
+func TestExecuteWinRM_CommandFailed(t *testing.T) {
+	e := makeTestWinrmExecutor()
+	makeCommandFailed()
+	defer restoreCommandFunc()
+
+	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	rc, err := e.executeWinRM(cmd)
+
+	if rc != -1 {
+		t.Errorf("return code => %d, wants => %d ", rc, -1)
 	}
 
-	if cmd.Args[2] != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
+	if err == nil {
+		t.Errorf("An error has occurred that is not expected.")
 	}
 
-	if cmd.Args[3] != WINRM_LOCAL {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[3])
+	if !strings.Contains(err.Error(), "Run command error: command failed") {
+		t.Errorf("error message => %s, wants => %s ", err, "Run command error: command failed")
 	}
 
-	if cmd.Args[4] != "host" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[4])
+}
+
+func TestExecuteWinRM_NotExistWinRMScript(t *testing.T) {
+	e := makeTestWinrmExecutor()
+	e.winrm = "notexist.ps1"
+	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	cmd.Stderr = nil
+
+	rc, err := e.executeWinRM(cmd)
+
+	if rc == 0 {
+		t.Errorf("return code => %d, wants => %d ", rc, -1)
 	}
 
-	if cmd.Args[5] != "user" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[5])
-	}
-
-	if cmd.Args[6] != "pass" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[6])
-	}
-
-	if cmd.Args[7] != "local_script.ps1 arg1 arg2 arg3" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[7])
+	if err != nil {
+		t.Errorf("An error has occurred that is not expected.")
 	}
 }

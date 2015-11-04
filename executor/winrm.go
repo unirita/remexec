@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -10,14 +11,11 @@ import (
 	"github.com/unirita/remexec/config"
 )
 
-const option = "-File"
-
 type WinrmExecutor struct {
-	host       string
-	user       string
-	pass       string
-	powershell string
-	winrm      string
+	host  string
+	user  string
+	pass  string
+	winrm string
 }
 
 const (
@@ -40,16 +38,16 @@ func NewWinrmExecutor(cfg *config.Config) *WinrmExecutor {
 }
 
 func (e *WinrmExecutor) ExecuteCommand(command string) (int, error) {
-	return e.ExecuteWinRM(command, WINRM_CMD)
+	cmd := e.createCmd(command, WINRM_CMD)
+	return e.executeWinRM(cmd)
 }
 
 func (e *WinrmExecutor) ExecuteScript(path string) (int, error) {
-	return e.ExecuteWinRM(path, WINRM_LOCAL)
+	cmd := e.createCmd(path, WINRM_LOCAL)
+	return e.executeWinRM(cmd)
 }
 
-func (e *WinrmExecutor) ExecuteWinRM(execution string, scripttype string) (int, error) {
-	cmd := e.createCmd(execution, scripttype)
-
+func (e *WinrmExecutor) executeWinRM(cmd *exec.Cmd) (int, error) {
 	rc, err := e.getRC(cmdRun(cmd))
 	if err != nil {
 		return -1, fmt.Errorf("Run command error: %s", err)
@@ -60,15 +58,14 @@ func (e *WinrmExecutor) ExecuteWinRM(execution string, scripttype string) (int, 
 
 func (e *WinrmExecutor) createCmd(execution string, scripttype string) *exec.Cmd {
 	cmd := new(exec.Cmd)
-
 	powershell := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
+	option := "-File"
 
 	cmd = exec.Command(powershell, option, e.winrm, scripttype, e.host, e.user, e.pass, execution)
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
 	return cmd
-
 }
 
 func run(cmd *exec.Cmd) error {
@@ -86,7 +83,7 @@ func (e *WinrmExecutor) getRC(err error) (int, error) {
 			if status, ok := exiterr.Sys().(syscall.WaitStatus); ok {
 				return status.ExitStatus(), nil
 			}
-			return -1, err
+			panic(errors.New("Unimplemented for system where exec.ExitError.Sys() is not syscall.WaitStatus."))
 		}
 		return -1, err
 	}
