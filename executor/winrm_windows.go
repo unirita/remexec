@@ -19,15 +19,11 @@ type WinRMExecutor struct {
 }
 
 const (
-	WINRM_CMD   = "e"
-	WINRM_LOCAL = "f"
+	WINRM_CMD   = "-exe"
+	WINRM_LOCAL = "-file"
 )
 
 var remexecPs1 = filepath.Join(filepath.Dir(getModulePath()), "remexec.ps1")
-
-type commandRunFunc func(*exec.Cmd) error
-
-var cmdRun commandRunFunc = run
 
 func NewWinRMExecutor(cfg *config.Config) *WinRMExecutor {
 	e := new(WinRMExecutor)
@@ -40,21 +36,17 @@ func NewWinRMExecutor(cfg *config.Config) *WinRMExecutor {
 
 func (e *WinRMExecutor) ExecuteCommand(command string) (int, error) {
 	cmd := e.createCmd(command, WINRM_CMD)
-	return e.executeWinRM(cmd)
+	return e.runAndGetRC(cmd)
 }
 
 func (e *WinRMExecutor) ExecuteScript(path string) (int, error) {
 	cmd := e.createCmd(path, WINRM_LOCAL)
-	return e.executeWinRM(cmd)
+	return e.runAndGetRC(cmd)
 }
 
-func (e *WinRMExecutor) executeWinRM(cmd *exec.Cmd) (int, error) {
-	rc, err := e.getRC(cmdRun(cmd))
-	if err != nil {
-		return -1, fmt.Errorf("Run command error: %s", err)
-	}
+func (e *WinRMExecutor) runAndGetRC(cmd *exec.Cmd) (int, error) {
 
-	return rc, nil
+	return e.getRC(cmd.Run())
 }
 
 func (e *WinRMExecutor) createCmd(execution string, scripttype string) *exec.Cmd {
@@ -67,15 +59,6 @@ func (e *WinRMExecutor) createCmd(execution string, scripttype string) *exec.Cmd
 	cmd.Stderr = os.Stderr
 
 	return cmd
-}
-
-func run(cmd *exec.Cmd) error {
-	err := cmd.Run()
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func (e *WinRMExecutor) getRC(err error) (int, error) {

@@ -1,7 +1,6 @@
 package executor
 
 import (
-	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,21 +17,6 @@ func makeTestWinrmExecutor() *WinRMExecutor {
 	e.pass = "pass"
 
 	return e
-}
-
-func makeWinRMExecutionSuccess() {
-	cmdRun = func(*exec.Cmd) error {
-		return nil
-	}
-}
-
-func makeCommandFailed() {
-	cmdRun = func(*exec.Cmd) error {
-		return errors.New("command failed.")
-	}
-}
-func restoreCommandFunc() {
-	cmdRun = run
 }
 
 func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
@@ -62,7 +46,7 @@ func TestCreateCmd_ValueCheckCmd_Normal(t *testing.T) {
 
 	_, err := os.Stat(cmd.Args[0])
 	if err != nil {
-		t.Errorf("Can not access powershell.exe. [%s]", cmd.Args[0])
+		t.Errorf("Can not access powershell.exe. [%s], error => %s", cmd.Args[0], err)
 	}
 
 	if cmd.Args[1] != "-File" {
@@ -124,7 +108,7 @@ func TestCreateCmd_ValueCheckLocalScript_Normal(t *testing.T) {
 
 	_, err := os.Stat(cmd.Args[0])
 	if err != nil {
-		t.Errorf("Can not access powershell.exe. [%s]", cmd.Args[0])
+		t.Errorf("Can not access powershell.exe. [%s], error => %s", cmd.Args[0], err)
 	}
 
 	if cmd.Args[1] != "-File" {
@@ -171,67 +155,22 @@ func TestCreateCmd_ValueCheckLocalScript_Argument(t *testing.T) {
 
 }
 
-func TestExecuteWinRM_WinRMExecutionSuccessCmd(t *testing.T) {
+func TestRunAndGetRC_CommandFailed(t *testing.T) {
 	e := makeTestWinrmExecutor()
-	makeWinRMExecutionSuccess()
-	defer restoreCommandFunc()
+	cmd := exec.Command("aaa")
 
-	cmd := e.createCmd("ipconfig", WINRM_CMD)
-
-	rc, err := e.executeWinRM(cmd)
-
-	if rc != 0 {
-		t.Errorf("return code => %d, wants => %d ", rc, 0)
-	}
-
-	if err != nil {
-		t.Errorf("An error has occurred that is not expected. %s", err)
-	}
-}
-
-func TestExecuteWinRM_WinRMExecutionSuccessLocalScript(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	makeWinRMExecutionSuccess()
-	defer restoreCommandFunc()
-
-	cmd := e.createCmd("test.ps1", WINRM_LOCAL)
-
-	rc, err := e.executeWinRM(cmd)
-
-	if rc != 0 {
-		t.Errorf("return code => %d, wants => %d ", rc, 0)
-	}
-
-	if err != nil {
-		t.Errorf("An error has occurred that is not expected. %s", err)
-	}
-}
-
-func TestExecuteWinRM_CommandFailed(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	makeCommandFailed()
-	defer restoreCommandFunc()
-
-	cmd := e.createCmd("ipconfig", WINRM_CMD)
-
-	rc, err := e.executeWinRM(cmd)
-
-	if rc != -1 {
-		t.Errorf("return code => %d, wants => %d ", rc, -1)
-	}
+	rc, err := e.runAndGetRC(cmd)
 
 	if err == nil {
 		t.Errorf("An error has occurred that is not expected.")
 	}
 
-	if !strings.Contains(err.Error(), "Run command error: command failed") {
-		t.Errorf("error message => %s, wants => %s ", err, "Run command error: command failed")
+	if rc != -1 {
+		t.Errorf("return code => %d, wants => %d ", rc, -1)
 	}
-
 }
 
-//Build environment windows only
-func TestExecuteWinRM_NoExistCredential(t *testing.T) {
+func TestRemexecPs1_NoExistCredential(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	e.host = "noexist"
 	remexecPs1 = filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "unirita", "remexec", "script", "remexec.ps1")
@@ -239,7 +178,7 @@ func TestExecuteWinRM_NoExistCredential(t *testing.T) {
 
 	cmd.Stderr = nil
 
-	rc, err := e.executeWinRM(cmd)
+	rc, err := e.runAndGetRC(cmd)
 
 	if err != nil {
 		t.Fatalf("An error has occurred that is not expected. %s", err)
