@@ -12,7 +12,6 @@ import (
 type Config struct {
 	Remote RemoteSection
 	SSH    SSHSection
-	WinRM  WinRMSection
 }
 
 // RemoteSection is [remote] section in config file.
@@ -23,17 +22,12 @@ type RemoteSection struct {
 	IsWindows int    `toml:"is_windows"`
 }
 
-// SSHSection is [remote] section in config file.
+// SSHSection is [ssh] section in config file.
 type SSHSection struct {
 	Port           int    `toml:"port"`
 	UseCertificate int    `toml:"use_certificate"`
 	PrivateKeyFile string `toml:"private_key_file"`
 	TemporaryDir   string `toml:"temporary_dir"`
-}
-
-// WinRMSection is [remote] section in config file.
-type WinRMSection struct {
-	WinRMScriptPath string `toml:"winrm_script_path"`
 }
 
 // Load loads config from file which is in path.

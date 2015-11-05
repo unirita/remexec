@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"testing"
 
@@ -15,7 +16,6 @@ func makeTestWinrmExecutor() *WinRMExecutor {
 	e.host = "host"
 	e.user = "user"
 	e.pass = "pass"
-	e.winrm = "winrm.ps1"
 
 	return e
 }
@@ -40,7 +40,6 @@ func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 	c.Remote.Host = "host"
 	c.Remote.User = "user"
 	c.Remote.Pass = "pass"
-	c.WinRM.WinRMScriptPath = "winrm.ps1"
 	e := NewWinRMExecutor(c)
 
 	if e.host != "host" {
@@ -55,27 +54,22 @@ func TestNewWinrmExecutor_ValueCheck(t *testing.T) {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", e.pass)
 	}
 
-	if e.winrm != "winrm.ps1" {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", e.winrm)
-	}
-
 }
 
 func TestCreateCmd_ValueCheckCmd_Normal(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("ipconfig", WINRM_CMD)
 
-	path := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
-
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
+	_, err := os.Stat(cmd.Args[0])
+	if err != nil {
+		t.Errorf("Can not access powershell.exe. [%s]", cmd.Args[0])
 	}
 
 	if cmd.Args[1] != "-File" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
 	}
 
-	if cmd.Args[2] != "winrm.ps1" {
+	if !strings.Contains(cmd.Args[2], "remexec.ps1") {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
 	}
 
@@ -128,17 +122,16 @@ func TestCreateCmd_ValueCheckLocalScript_Normal(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	cmd := e.createCmd("local_script.ps1", WINRM_LOCAL)
 
-	path := strings.Replace(os.Getenv("PSModulePath"), "Modules\\", "powershell.exe", -1)
-
-	if cmd.Args[0] != path {
-		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[0])
+	_, err := os.Stat(cmd.Args[0])
+	if err != nil {
+		t.Errorf("Can not access powershell.exe. [%s]", cmd.Args[0])
 	}
 
 	if cmd.Args[1] != "-File" {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[1])
 	}
 
-	if cmd.Args[2] != "winrm.ps1" {
+	if !strings.Contains(cmd.Args[2], "remexec.ps1") {
 		t.Errorf("The value that you expect to pass is not turned on. [%s]", cmd.Args[2])
 	}
 
@@ -237,40 +230,22 @@ func TestExecuteWinRM_CommandFailed(t *testing.T) {
 
 }
 
-func TestExecuteWinRM_NotExistWinRMScript(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	e.winrm = "notexist.ps1"
-	cmd := e.createCmd("ipconfig", WINRM_CMD)
-
-	cmd.Stderr = nil
-
-	rc, err := e.executeWinRM(cmd)
-
-	if rc == 0 {
-		t.Errorf("return code is 0")
-	}
-
-	if err != nil {
-		t.Errorf("An error has occurred that is not expected. %s", err)
-	}
-}
-
 //Build environment windows only
-func _TestExecuteWinRM_NoExistCredential(t *testing.T) {
+func TestExecuteWinRM_NoExistCredential(t *testing.T) {
 	e := makeTestWinrmExecutor()
 	e.host = "noexist"
-	e.winrm = "..\\script\\winrm.ps1"
+	remexecPs1 = filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "unirita", "remexec", "script", "remexec.ps1")
 	cmd := e.createCmd("ipconfig", WINRM_CMD)
 
 	cmd.Stderr = nil
 
 	rc, err := e.executeWinRM(cmd)
+
+	if err != nil {
+		t.Fatalf("An error has occurred that is not expected. %s", err)
+	}
 
 	if rc != 250 {
 		t.Errorf("return code => %d, wants => %d ", rc, 250)
-	}
-
-	if err != nil {
-		t.Errorf("An error has occurred that is not expected. %s", err)
 	}
 }
