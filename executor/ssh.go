@@ -39,6 +39,7 @@ func NewSSHExecutor(cfg *config.Config) *SSHExecutor {
 	if e.tmpDir == "" {
 		e.tmpDir = defaultTmpDir
 	}
+	fmt.Println("tmpdirorg:", cfg.SSH.TemporaryDir)
 	fmt.Println("tmpdir:", e.tmpDir)
 
 	e.config = new(ssh.ClientConfig)
