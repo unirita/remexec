@@ -45,7 +45,10 @@ func (e *WinRMExecutor) ExecuteScript(path string) (int, error) {
 }
 
 func (e *WinRMExecutor) runAndGetRC(cmd *exec.Cmd) (int, error) {
-
+	_, err := os.Stat(remexecPs1)
+	if err != nil {
+		return 255, err
+	}
 	return e.getRC(cmd.Run())
 }
 
