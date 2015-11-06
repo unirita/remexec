@@ -1,3 +1,5 @@
+@echo off
+
 echo "test message."
 
 echo "%1 %2 %3"
