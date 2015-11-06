@@ -24,7 +24,7 @@ is_windows = 1
 port             = 1234
 use_certificate  = 1
 private_key_file = "test.pem"
-temporary_dir    = "/tmp"
+temporary_dir    = "/test/tmp"
 `
 
 	c, err := loadReader(strings.NewReader(configString))
@@ -52,7 +52,7 @@ temporary_dir    = "/tmp"
 	if c.SSH.PrivateKeyFile != "test.pem" {
 		t.Errorf("c.SSH.PrivateKeyFile => %s, wants %s", c.SSH.PrivateKeyFile, "test.pem")
 	}
-	if c.SSH.TemporaryDir != "/tmp" {
+	if c.SSH.TemporaryDir != "/test/tmp" {
 		t.Errorf("c.SSH.TemporaryDir => %s, wants %s", c.SSH.TemporaryDir, "/tmp")
 	}
 }

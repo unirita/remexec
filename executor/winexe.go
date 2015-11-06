@@ -27,7 +27,7 @@ func (e *WinexeExecutor) ExecuteCommand(command string) (int, error) {
 	userParam := fmt.Sprintf("%s%%%s", e.user, e.pass)
 	hostParam := fmt.Sprintf("//%s", e.host)
 	commandParam := fmt.Sprintf("cmd /c %s", command)
-	cmd := exec.Command("winexe", "-U", userParam, hostParam, commandParam)
+	cmd := exec.Command("winexe", "--uninstall", "-U", userParam, hostParam, commandParam)
 
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr

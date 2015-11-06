@@ -69,6 +69,10 @@ func publicKeyFile(file string) ssh.AuthMethod {
 }
 
 func (e *SSHExecutor) ExecuteCommand(command string) (int, error) {
+	if len(e.config.Auth) < 1 || e.config.Auth[0] == nil {
+		return -1, fmt.Errorf("Authorize failed: password or private key file is wrong.")
+	}
+
 	conn, err := ssh.Dial("tcp", e.addr, e.config)
 	if err != nil {
 		return -1, fmt.Errorf("Dial error: %s", err)
