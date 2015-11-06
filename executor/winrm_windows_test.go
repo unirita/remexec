@@ -168,3 +168,19 @@ func TestRunAndGetRC_CommandFailed(t *testing.T) {
 		t.Errorf("return code => %d, wants => %d ", rc, -1)
 	}
 }
+
+func TestRunAndGetRC_NoExistRemexePs1(t *testing.T) {
+	e := makeTestWinrmExecutor()
+	remexecPs1 = "noexist"
+	cmd := e.createCmd("ipconfig", WINRM_CMD)
+
+	rc, err := e.runAndGetRC(cmd)
+
+	if err == nil {
+		t.Errorf("An error has occurred that is not expected.")
+	}
+
+	if rc != 255 {
+		t.Errorf("return code => %d, wants => %d ", rc, 255)
+	}
+}
