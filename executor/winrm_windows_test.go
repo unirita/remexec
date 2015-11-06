@@ -3,7 +3,6 @@ package executor
 import (
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -167,24 +166,5 @@ func TestRunAndGetRC_CommandFailed(t *testing.T) {
 
 	if rc != -1 {
 		t.Errorf("return code => %d, wants => %d ", rc, -1)
-	}
-}
-
-func TestRemexecPs1_NoExistCredential(t *testing.T) {
-	e := makeTestWinrmExecutor()
-	e.host = "noexist"
-	remexecPs1 = filepath.Join(os.Getenv("GOPATH"), "src", "github.com", "unirita", "remexec", "script", "remexec.ps1")
-	cmd := e.createCmd("ipconfig", WINRM_CMD)
-
-	cmd.Stderr = nil
-
-	rc, err := e.runAndGetRC(cmd)
-
-	if err != nil {
-		t.Fatalf("An error has occurred that is not expected. %s", err)
-	}
-
-	if rc != 250 {
-		t.Errorf("return code => %d, wants => %d ", rc, 250)
 	}
 }
